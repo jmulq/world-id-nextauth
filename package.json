@@ -18,6 +18,7 @@
     "Lluis Agusti <hi@llu.lu>"
   ],
   "dependencies": {
+    "@worldcoin/idkit": "^0.5.1",
     "next": "latest",
     "next-auth": "latest",
     "react": "^18.2.0",
