@@ -22,7 +22,9 @@
     "next": "latest",
     "next-auth": "latest",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "viem": "^1.5.3",
+    "wagmi": "^1.3.9"
   },
   "devDependencies": {
     "@types/node": "^18.16.2",
