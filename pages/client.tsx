@@ -16,52 +16,72 @@ import { useState } from "react";
 import ContractAbi from "../abi/Contract.abi";
 import { BigNumber } from "ethers";
 import { decode } from "../utils/wld";
+import { decodeErrorResult } from "viem";
 
 export default function ClientPage() {
   const { address } = useAccount();
 
   const [proof, setProof] = useState<ISuccessResult | null>(null);
 
-  const { config } = usePrepareContractWrite({
+  console.log(
+    "NEXT_PUBLIC_CONTRACT_ADDR",
+    process.env.NEXT_PUBLIC_CONTRACT_ADDR
+  );
+
+  const args = [
+    address!,
+    proof?.merkle_root
+      ? decode<BigNumber>("uint256", proof?.merkle_root ?? "")
+      : BigNumber.from(0),
+    proof?.nullifier_hash
+      ? decode<BigNumber>("uint256", proof?.nullifier_hash ?? "")
+      : BigNumber.from(0),
+    proof?.proof
+      ? decode<
+          [
+            BigNumber,
+            BigNumber,
+            BigNumber,
+            BigNumber,
+            BigNumber,
+            BigNumber,
+            BigNumber,
+            BigNumber
+          ]
+        >("uint256[8]", proof?.proof ?? "")
+      : [
+          BigNumber.from(0),
+          BigNumber.from(0),
+          BigNumber.from(0),
+          BigNumber.from(0),
+          BigNumber.from(0),
+          BigNumber.from(0),
+          BigNumber.from(0),
+          BigNumber.from(0),
+        ],
+  ];
+
+  console.log('args', args)
+
+  const { config, error } = usePrepareContractWrite({
     address: process.env.NEXT_PUBLIC_CONTRACT_ADDR as `0x${string}`,
     abi: ContractAbi,
     enabled: proof != null && address != null,
     functionName: "verifyAndExecute",
-    args: [
-      address!,
-      proof?.merkle_root
-        ? decode<BigNumber>("uint256", proof?.merkle_root ?? "")
-        : BigNumber.from(0),
-      proof?.nullifier_hash
-        ? decode<BigNumber>("uint256", proof?.nullifier_hash ?? "")
-        : BigNumber.from(0),
-      proof?.proof
-        ? decode<
-            [
-              BigNumber,
-              BigNumber,
-              BigNumber,
-              BigNumber,
-              BigNumber,
-              BigNumber,
-              BigNumber,
-              BigNumber
-            ]
-          >("uint256[8]", proof?.proof ?? "")
-        : [
-            BigNumber.from(0),
-            BigNumber.from(0),
-            BigNumber.from(0),
-            BigNumber.from(0),
-            BigNumber.from(0),
-            BigNumber.from(0),
-            BigNumber.from(0),
-            BigNumber.from(0),
-          ],
-    ],
+    args,
+    gas: BigInt(100000000000000000)
   });
 
+  if (error) {
+    console.log("error", error);
+    const value = decodeErrorResult({
+      abi: ContractAbi,
+      data: "0x728ade92",
+    });
+  }
+
   const { data, write } = useContractWrite(config);
+  console.log("write", write);
 
   const { isLoading, isSuccess } = useWaitForTransaction({
     hash: data?.hash,
@@ -110,14 +130,26 @@ export default function ClientPage() {
 
       {proof ? (
         <>
-          <button onClick={write}>
+          <button
+            disabled={!write || isLoading}
+            onClick={() => {
+              if (write) {
+                console.log("about to write");
+                write();
+              }
+            }}
+          >
             {isLoading ? "Sending..." : "Send tx"}
           </button>
           {isSuccess && (
             <div>
               Transaction successful!
               <div>
-                <a href={`https://goerli-optimism.etherscan.io/tx/${data?.hash}`}>Etherscan</a>
+                <a
+                  href={`https://goerli-optimism.etherscan.io/tx/${data?.hash}`}
+                >
+                  Etherscan
+                </a>
               </div>
             </div>
           )}
@@ -125,7 +157,7 @@ export default function ClientPage() {
       ) : (
         <IDKitWidget
           app_id={appId} // obtained from the Developer Portal
-          action={solidityEncode(["uint256"], ["election_vote"])}
+          action={"election_vote"}
           signal={address}
           onSuccess={setProof} // callback when the modal is closed
           // handleVerify={handleVerify} // optional callback when the proof is received - Not needed when performing on-chain proof validation
