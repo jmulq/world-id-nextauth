@@ -86,29 +86,6 @@ export default function Header() {
               >
                 Sign out
               </a>
-
-              {isConnected ? (
-                <div>
-                  <img src={ensAvatar || ""} alt="ENS Avatar" />
-                  <div>{ensName ? `${ensName} (${address})` : address}</div>
-                  <div>Connected to {connector?.name}</div>
-                  <button onClick={() => disconnect()}>Disconnect</button>
-                </div>
-              ) : (
-                connectors.map((connector) => (
-                  <button
-                    disabled={!connector.ready}
-                    key={connector.id}
-                    onClick={() => connect({ connector })}
-                  >
-                    {connector.name}
-                    {!connector.ready && " (unsupported)"}
-                    {isLoading &&
-                      connector.id === pendingConnector?.id &&
-                      " (connecting)"}
-                  </button>
-                ))
-              )}
             </>
           )}
         </p>
@@ -138,6 +115,30 @@ export default function Header() {
           </li>
         </ul>
       </nav>
+
+      {isConnected ? (
+                <div>
+                  <img src={ensAvatar || ""} alt="ENS Avatar" />
+                  <div>{ensName ? `${ensName} (${address})` : address}</div>
+                  <div>Connected to {connector?.name}</div>
+                  <button onClick={() => disconnect()}>Disconnect</button>
+                </div>
+              ) : (
+                connectors.map((connector) => (
+                  <button
+                    disabled={!connector.ready}
+                    key={connector.id}
+                    onClick={() => connect({ connector })}
+                  >
+                    {connector.name}
+                    {!connector.ready && " (unsupported)"}
+                    {isLoading &&
+                      connector.id === pendingConnector?.id &&
+                      " (connecting)"}
+                  </button>
+                ))
+              )}
+
     </header>
   );
 }
